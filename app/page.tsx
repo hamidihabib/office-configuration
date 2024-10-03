@@ -1,101 +1,169 @@
-import Image from "next/image";
+"use client";
+
+import React, { useEffect, useState, useCallback } from "react";
+import Switch from "./components/Switch";
+import { Code } from "@geist-ui/core";
+
+// Define a type for the app state
+type AppState = {
+  MAK: boolean;
+  Word: boolean;
+  Excel: boolean;
+  PowerPoint: boolean;
+  Outlook: boolean;
+  OneNote: boolean;
+  Access: boolean;
+  Project: boolean;
+  Visio: boolean;
+};
+
+// Initial state
+const initialApps: AppState = {
+  MAK: true,
+  Word: true,
+  Excel: true,
+  PowerPoint: true,
+  Outlook: true,
+  OneNote: true,
+  Access: true,
+  Project: true,
+  Visio: true,
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [checked, setChecked] = useState<AppState>(initialApps);
+  const [XML, setXML] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Memoize the XML generation function
+  const generateOfficeXML = useCallback(
+    ({
+      MAK,
+      Word,
+      Excel,
+      PowerPoint,
+      Outlook,
+      OneNote,
+      Access,
+      Project,
+      Visio,
+    }: AppState) =>
+      `<Configuration>
+ ${
+   MAK
+     ? `<!-- this configuration is for MAK Activation -->`
+     : `<!-- this configuration is for KMS Activation -->`
+ }
+ <Add OfficeClientEdition="64" Channel="PerpetualVL2024">
+   <Product ID="ProPlus2024Volume" PIDKEY="${
+     MAK ? "Y63J7-9RNDJ-GD3BV-BDKBP-HH966" : "2TDPW-NDQ7G-FMG99-DXQ7M-TX3T2"
+   }">
+     <Language ID="en-us" />
+     ${Word ? `<!-- <ExcludeApp ID="Word" /> -->` : '<ExcludeApp ID="Word" />'}
+     ${
+       Excel
+         ? `<!-- <ExcludeApp ID="Excel" /> -->`
+         : '<ExcludeApp ID="Excel" />'
+     }
+     ${
+       PowerPoint
+         ? `<!-- <ExcludeApp ID="PowerPoint" /> -->`
+         : '<ExcludeApp ID="PowerPoint" />'
+     }
+     ${
+       Outlook
+         ? `<!-- <ExcludeApp ID="Outlook" /> -->`
+         : '<ExcludeApp ID="Outlook" />'
+     }
+     ${
+       OneNote
+         ? `<!-- <ExcludeApp ID="OneNote" /> -->`
+         : '<ExcludeApp ID="OneNote" />'
+     }
+     ${
+       Access
+         ? `<!-- <ExcludeApp ID="Access" /> -->`
+         : '<ExcludeApp ID="Access" />'
+     }
+   </Product>
+   ${
+     Visio
+       ? `<Product ID="VisioPro2024Volume" PIDKEY="${
+           MAK
+             ? "3HYNG-BB9J3-MVPP7-2W3D8-CPVG7"
+             : "YW66X-NH62M-G6YFP-B7KCT-WXGKQ"
+         }">
+     <Language ID="en-us" />
+   </Product>`
+       : ``
+   }
+   ${
+     Project
+       ? `<Product ID="ProjectPro2024Volume" PIDKEY="${
+           MAK
+             ? "GQRNR-KHGMM-TCMK6-M2R3H-94W9W"
+             : "D9GTG-NP7DV-T6JP3-B6B62-JB89R"
+         }">
+     <Language ID="en-us" />
+   </Product>`
+       : ``
+   }
+ </Add>
+ <RemoveMSI />
+ <Property Name="AUTOACTIVATE" Value="1" />
+</Configuration>`,
+    []
+  );
+
+  // Memoize the click handler to avoid unnecessary re-renders
+  const handleClick = useCallback((appName: keyof AppState) => {
+    setChecked((prevChecked) => ({
+      ...prevChecked,
+      [appName]: !prevChecked[appName], // Toggle the value
+    }));
+  }, []);
+
+  // Update XML whenever the state changes
+  useEffect(() => {
+    setXML(generateOfficeXML(checked));
+  }, [checked, generateOfficeXML]);
+
+  // Function to download the XML
+  const handleDownload = () => {
+    const blob = new Blob([XML], { type: "application/xml" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Configuration.xml"; // Filename for the download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link); // Cleanup the link after download
+  };
+
+  const appNames = Object.keys(initialApps) as (keyof AppState)[];
+
+  return (
+    <div>
+      <h1>Home</h1>
+      <div>
+        {appNames.map((appName) => (
+          <Switch
+            key={appName}
+            onClick={() => handleClick(appName)}
+            checked={checked[appName]}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            {appName}
+          </Switch>
+        ))}
+      </div>
+      {/* Button to trigger download */}
+      <Code block color="red" my={0}>
+        {XML}
+      </Code>
+      <button
+        className="bg-blue-500 px-2 py-1 text-white rounded"
+        onClick={handleDownload}
+      >
+        Download XML
+      </button>
     </div>
   );
 }
