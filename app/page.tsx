@@ -197,7 +197,7 @@ export default function Home() {
         <div>
           <LanguageDropdown />
           <div>
-            <label className=" text-lg">Select Activation type</label>
+            <label className="font-semibold">Select Activation type</label>
             {appNames.map((appName) => (
               <Switch
                 radius={appName == "KMS" || appName == "MAK" ? true : false}

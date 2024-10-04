@@ -28,19 +28,26 @@ export default function Switch({
   );
 
   return (
-    <div
-      className={`flex items-center w-min ${children === "KMS" ? "mb-5" : ""}`}
-      {...props}
-    >
-      <label className="pr-2 w-28">{children}</label>
-      <button
-        onClick={onClick}
-        className={buttonClasses}
-        aria-pressed={checked} // Improved accessibility
+    <div>
+      <div
+        className={`flex items-center w-min ${
+          children === "KMS" ? "mb-5" : ""
+        }`}
+        {...props}
       >
-        <span className={circleClasses} />
-      </button>
-      <label className="pl-2">{checked ? "On" : "Off"}</label>
+        <label className="pr-2 w-28">{children}</label>
+        <button
+          onClick={onClick}
+          className={buttonClasses}
+          aria-pressed={checked} // Improved accessibility
+        >
+          <span className={circleClasses} />
+        </button>
+        <label className="pl-2">{checked ? "On" : "Off"}</label>
+      </div>
+      {children == "KMS" && (
+        <label className="font-semibold">Disable App</label>
+      )}
     </div>
   );
 }
