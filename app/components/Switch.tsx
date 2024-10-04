@@ -13,6 +13,7 @@ export default function Switch({
   children,
   checked = true,
   radius = true,
+  onClick,
   ...props
 }: SwitchProps) {
   const classes = {
@@ -30,11 +31,11 @@ export default function Switch({
   };
   return (
     <div
-      className={`flex items-center px-2 w-96 ${children == "KMS" && "pb-5"}`}
+      className={`flex items-center w-min ${children == "KMS" && "pb-5"}`}
       {...props}
     >
       <label className="pr-2 w-28">{children}</label>
-      <button className={classes.button}>
+      <button onClick={onClick} className={classes.button}>
         <span className={classes.circle} />
       </button>
       <label className="pl-2">{checked ? "On" : "Off"}</label>

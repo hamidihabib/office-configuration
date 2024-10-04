@@ -83,7 +83,7 @@ export default function Home() {
         : ``
     }${
         Project
-          ? `<Product ID="ProjectPro2024Volume" PIDKEY="${
+          ? `\n      <Product ID="ProjectPro2024Volume" PIDKEY="${
               MAK
                 ? "GQRNR-KHGMM-TCMK6-M2R3H-94W9W"
                 : "D9GTG-NP7DV-T6JP3-B6B62-JB89R"
@@ -101,10 +101,18 @@ export default function Home() {
 
   // Handle app switch toggle
   const handleClick = useCallback((appName: keyof AppState) => {
-    setChecked((prevChecked) => ({
-      ...prevChecked,
-      [appName]: !prevChecked[appName], // Toggle the value
-    }));
+    setChecked((prevChecked) => {
+      if (appName === "MAK" && !prevChecked.MAK) {
+        return { ...prevChecked, MAK: true, KMS: false };
+      }
+      if (appName === "KMS" && !prevChecked.KMS) {
+        return { ...prevChecked, KMS: true, MAK: false };
+      }
+      return {
+        ...prevChecked,
+        [appName]: !prevChecked[appName], // Toggle the value
+      };
+    });
   }, []);
 
   // Update XML whenever the state changes
@@ -132,13 +140,15 @@ export default function Home() {
     };
 
     return (
-      <div className="p-5">
-        <label htmlFor="language-select">Choose a language:</label>
+      <div>
+        <label className="font-semibold" htmlFor="language-select">
+          Choose a language:
+        </label>
         <select
           id="language-select"
           value={selectedLanguage}
           onChange={handleChange}
-          className="font-bold"
+          className="font-semibold text-gray-500 italic ring-1 ring-blue-500 rounded"
         >
           {languages.map((language) => (
             <option key={language.code} value={language.code}>
@@ -146,47 +156,57 @@ export default function Home() {
             </option>
           ))}
         </select>
-
+        <br />
         {/* Display the selected language */}
         {selectedLanguage && (
-          <p>
-            Selected Language: <b>{selectedLanguage}</b>
-          </p>
+          <label className="font-semibold">
+            Selected Language:{" "}
+            <i className="text-gray-500">{selectedLanguage}</i>
+          </label>
         )}
       </div>
     );
   };
 
   return (
-    <div className="flex items-start">
-      <div>
-        <LanguageDropdown />
-        <div className="p-4">
-          <h2 className="font-semibold text-lg">Select activation type</h2>
-          {appNames.map((appName) => (
-            <Switch
-              radius={appName == "KMS" || appName == "MAK" ? true : false}
-              key={appName}
-              onClick={() => handleClick(appName)}
-              checked={checked[appName]}
-            >
-              {appName}
-            </Switch>
-          ))}
+    <div className="flex-col items-center">
+      <div className="flex flex-wrap ml-5 mt-5">
+        <div>
+          <LanguageDropdown />
+          <div className="">
+            <h2 className="font-semibold text-lg">Select activation type</h2>
+            {appNames.map((appName) => (
+              <Switch
+                radius={appName == "KMS" || appName == "MAK" ? true : false}
+                key={appName}
+                onClick={() => handleClick(appName)}
+                checked={checked[appName]}
+              >
+                {appName}
+              </Switch>
+            ))}
+          </div>
         </div>
-      </div>
-      <div>
-        {/* Display generated XML */}
-        <Code block color="red" my={0}>
-          {XML}
-        </Code>
-        {/* Button to trigger XML download */}
-        <button
-          className="bg-blue-500 px-2 py-1 text-white rounded"
-          onClick={handleDownload}
-        >
-          Download XML
-        </button>
+        <div className="mt-3">
+          {/* Display generated XML */}
+          <Code
+            className="border rounded overflow-auto shadow-sm"
+            block
+            color="red"
+            my={0}
+          >
+            {XML}
+          </Code>
+          {/* Button to trigger XML download */}
+          <div>
+            <button
+              className="bg-blue-500 px-2 py-0.5 font-bold text-white rounded"
+              onClick={handleDownload}
+            >
+              Download XML
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
