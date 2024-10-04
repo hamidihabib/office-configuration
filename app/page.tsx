@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Switch from "./components/Switch";
 import { Code } from "@geist-ui/core";
 import { languages } from "./components/languages";
+import { Check, Copy } from "@geist-ui/icons";
 
 // Define a type for the app state
 type AppState = {
@@ -37,6 +38,7 @@ export default function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-us");
   const [checked, setChecked] = useState<AppState>(initialApps);
   const [XML, setXML] = useState("");
+  const [copySuccess, setCopySuccess] = useState<string>("");
 
   // Memoize XML generation based on selected apps and language
   const generateOfficeXML = useCallback(
@@ -133,6 +135,14 @@ export default function Home() {
 
   const appNames = Object.keys(initialApps) as (keyof AppState)[];
 
+  // Function to copy XML to clipboard
+  const handleCopy = () => {
+    navigator.clipboard.writeText(XML).then(
+      () => setCopySuccess("Copied!"),
+      () => setCopySuccess("Failed to copy.")
+    );
+  };
+
   // Language dropdown component
   const LanguageDropdown: React.FC = () => {
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -198,12 +208,19 @@ export default function Home() {
             {XML}
           </Code>
           {/* Button to trigger XML download */}
-          <div>
+          <div className="flex flex-row-reverse gap-2 py-1">
             <button
               className="bg-blue-500 px-2 py-0.5 font-bold text-white rounded"
               onClick={handleDownload}
             >
               Download XML
+            </button>
+            <button
+              className="bg-white px-2 py-1 text-gray-600 rounded border border-gray-500 flex"
+              onClick={handleCopy}
+            >
+              Copy
+              {copySuccess ? <Check /> : <Copy />}
             </button>
           </div>
         </div>
