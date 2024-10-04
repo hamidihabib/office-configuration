@@ -171,7 +171,7 @@ export default function Home() {
           id="language-select"
           value={selectedLanguage}
           onChange={handleChange}
-          className="font-semibold text-gray-500 italic underline bg-gray-100 rounded"
+          className="h-[30px] text-gray-500 italic bg-[#eaeaea] rounded-tr-md rounded-bl-md cursor-pointer"
         >
           {languages.map((language) => (
             <option key={language.code} value={language.code}>
@@ -210,7 +210,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        <div className="mt-3">
+        <div>
           {/* Display generated XML */}
           <Code
             name="Configuration.xml"
