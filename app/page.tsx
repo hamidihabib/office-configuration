@@ -163,7 +163,7 @@ export default function Home() {
     };
 
     return (
-      <div>
+      <div className="mb-5">
         <label className="font-semibold" htmlFor="language-select">
           Choose a language:
         </label>
@@ -171,7 +171,7 @@ export default function Home() {
           id="language-select"
           value={selectedLanguage}
           onChange={handleChange}
-          className="font-semibold text-gray-500 italic ring-1 ring-blue-500 rounded"
+          className="font-semibold text-gray-500 italic underline bg-gray-100 rounded"
         >
           {languages.map((language) => (
             <option key={language.code} value={language.code}>
@@ -196,8 +196,8 @@ export default function Home() {
       <div className="flex flex-wrap ml-5 mt-5">
         <div>
           <LanguageDropdown />
-          <div className="">
-            <h2 className="font-semibold text-lg">Select activation type</h2>
+          <div>
+            <label className=" text-lg">Select Activation type</label>
             {appNames.map((appName) => (
               <Switch
                 radius={appName == "KMS" || appName == "MAK" ? true : false}
