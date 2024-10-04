@@ -3,10 +3,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Switch from "./components/Switch";
 import { Code } from "@geist-ui/core";
+import { languages } from "./components/languages";
 
 // Define a type for the app state
 type AppState = {
   MAK: boolean;
+  KMS: boolean;
   Word: boolean;
   Excel: boolean;
   PowerPoint: boolean;
@@ -17,9 +19,10 @@ type AppState = {
   Visio: boolean;
 };
 
-// Initial state
+// Initial app states
 const initialApps: AppState = {
   MAK: true,
+  KMS: false,
   Word: true,
   Excel: true,
   PowerPoint: true,
@@ -31,90 +34,72 @@ const initialApps: AppState = {
 };
 
 export default function Home() {
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-us");
   const [checked, setChecked] = useState<AppState>(initialApps);
   const [XML, setXML] = useState("");
 
-  // Memoize the XML generation function
+  // Memoize XML generation based on selected apps and language
   const generateOfficeXML = useCallback(
-    ({
-      MAK,
-      Word,
-      Excel,
-      PowerPoint,
-      Outlook,
-      OneNote,
-      Access,
-      Project,
-      Visio,
-    }: AppState) =>
+    (
+      {
+        MAK,
+        Word,
+        Excel,
+        PowerPoint,
+        Outlook,
+        OneNote,
+        Access,
+        Project,
+        Visio,
+      }: AppState,
+      language: string
+    ) =>
       `<Configuration>
- ${
-   MAK
-     ? `<!-- this configuration is for MAK Activation -->`
-     : `<!-- this configuration is for KMS Activation -->`
- }
- <Add OfficeClientEdition="64" Channel="PerpetualVL2024">
-   <Product ID="ProPlus2024Volume" PIDKEY="${
-     MAK ? "Y63J7-9RNDJ-GD3BV-BDKBP-HH966" : "2TDPW-NDQ7G-FMG99-DXQ7M-TX3T2"
-   }">
-     <Language ID="en-us" />
-     ${Word ? `<!-- <ExcludeApp ID="Word" /> -->` : '<ExcludeApp ID="Word" />'}
-     ${
-       Excel
-         ? `<!-- <ExcludeApp ID="Excel" /> -->`
-         : '<ExcludeApp ID="Excel" />'
-     }
-     ${
-       PowerPoint
-         ? `<!-- <ExcludeApp ID="PowerPoint" /> -->`
-         : '<ExcludeApp ID="PowerPoint" />'
-     }
-     ${
-       Outlook
-         ? `<!-- <ExcludeApp ID="Outlook" /> -->`
-         : '<ExcludeApp ID="Outlook" />'
-     }
-     ${
-       OneNote
-         ? `<!-- <ExcludeApp ID="OneNote" /> -->`
-         : '<ExcludeApp ID="OneNote" />'
-     }
-     ${
-       Access
-         ? `<!-- <ExcludeApp ID="Access" /> -->`
-         : '<ExcludeApp ID="Access" />'
-     }
-   </Product>
-   ${
-     Visio
-       ? `<Product ID="VisioPro2024Volume" PIDKEY="${
-           MAK
-             ? "3HYNG-BB9J3-MVPP7-2W3D8-CPVG7"
-             : "YW66X-NH62M-G6YFP-B7KCT-WXGKQ"
-         }">
-     <Language ID="en-us" />
-   </Product>`
-       : ``
-   }
-   ${
-     Project
-       ? `<Product ID="ProjectPro2024Volume" PIDKEY="${
-           MAK
-             ? "GQRNR-KHGMM-TCMK6-M2R3H-94W9W"
-             : "D9GTG-NP7DV-T6JP3-B6B62-JB89R"
-         }">
-     <Language ID="en-us" />
-   </Product>`
-       : ``
-   }
- </Add>
- <RemoveMSI />
- <Property Name="AUTOACTIVATE" Value="1" />
+  ${
+    MAK
+      ? `<!-- configuration for MAK Activation -->`
+      : `<!-- configuration for KMS Activation -->`
+  }
+  <Add OfficeClientEdition="64" Channel="PerpetualVL2024">
+    <Product ID="ProPlus2024Volume" PIDKEY="${
+      MAK ? "Y63J7-9RNDJ-GD3BV-BDKBP-HH966" : "2TDPW-NDQ7G-FMG99-DXQ7M-TX3T2"
+    }">
+      <Language ID="${language}" />${
+        Word ? `` : '\n      <ExcludeApp ID="Word" />'
+      }${Excel ? `` : '\n      <ExcludeApp ID="Excel" />'}${
+        PowerPoint ? `` : '\n      <ExcludeApp ID="PowerPoint" />'
+      }${Outlook ? `` : '\n      <ExcludeApp ID="Outlook" />'}${
+        OneNote ? `` : '\n      <ExcludeApp ID="OneNote" />'
+      }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}
+    </Product>${
+      Visio
+        ? `<Product ID="VisioPro2024Volume" PIDKEY="${
+            MAK
+              ? "3HYNG-BB9J3-MVPP7-2W3D8-CPVG7"
+              : "YW66X-NH62M-G6YFP-B7KCT-WXGKQ"
+          }">
+      <Language ID="${language}" />
+    </Product>`
+        : ``
+    }${
+        Project
+          ? `<Product ID="ProjectPro2024Volume" PIDKEY="${
+              MAK
+                ? "GQRNR-KHGMM-TCMK6-M2R3H-94W9W"
+                : "D9GTG-NP7DV-T6JP3-B6B62-JB89R"
+            }">
+      <Language ID="${language}" />
+    </Product>`
+          : ``
+      }
+  </Add>
+  <RemoveMSI />
+  <Property Name="AUTOACTIVATE" Value="1" />
 </Configuration>`,
     []
   );
 
-  // Memoize the click handler to avoid unnecessary re-renders
+  // Handle app switch toggle
   const handleClick = useCallback((appName: keyof AppState) => {
     setChecked((prevChecked) => ({
       ...prevChecked,
@@ -124,15 +109,15 @@ export default function Home() {
 
   // Update XML whenever the state changes
   useEffect(() => {
-    setXML(generateOfficeXML(checked));
-  }, [checked, generateOfficeXML]);
+    setXML(generateOfficeXML(checked, selectedLanguage));
+  }, [checked, selectedLanguage, generateOfficeXML]);
 
-  // Function to download the XML
+  // Function to download the generated XML
   const handleDownload = () => {
     const blob = new Blob([XML], { type: "application/xml" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Configuration.xml"; // Filename for the download
+    link.download = "Configuration.xml";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link); // Cleanup the link after download
@@ -140,30 +125,69 @@ export default function Home() {
 
   const appNames = Object.keys(initialApps) as (keyof AppState)[];
 
-  return (
-    <div>
-      <h1>Home</h1>
-      <div>
-        {appNames.map((appName) => (
-          <Switch
-            key={appName}
-            onClick={() => handleClick(appName)}
-            checked={checked[appName]}
-          >
-            {appName}
-          </Switch>
-        ))}
+  // Language dropdown component
+  const LanguageDropdown: React.FC = () => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setSelectedLanguage(event.target.value); // Update language selection
+    };
+
+    return (
+      <div className="p-5">
+        <label htmlFor="language-select">Choose a language:</label>
+        <select
+          id="language-select"
+          value={selectedLanguage}
+          onChange={handleChange}
+          className="font-bold"
+        >
+          {languages.map((language) => (
+            <option key={language.code} value={language.code}>
+              {language.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Display the selected language */}
+        {selectedLanguage && (
+          <p>
+            Selected Language: <b>{selectedLanguage}</b>
+          </p>
+        )}
       </div>
-      {/* Button to trigger download */}
-      <Code block color="red" my={0}>
-        {XML}
-      </Code>
-      <button
-        className="bg-blue-500 px-2 py-1 text-white rounded"
-        onClick={handleDownload}
-      >
-        Download XML
-      </button>
+    );
+  };
+
+  return (
+    <div className="flex items-start">
+      <div>
+        <LanguageDropdown />
+        <div className="p-4">
+          <h2 className="font-semibold text-lg">Select activation type</h2>
+          {appNames.map((appName) => (
+            <Switch
+              radius={appName == "KMS" || appName == "MAK" ? true : false}
+              key={appName}
+              onClick={() => handleClick(appName)}
+              checked={checked[appName]}
+            >
+              {appName}
+            </Switch>
+          ))}
+        </div>
+      </div>
+      <div>
+        {/* Display generated XML */}
+        <Code block color="red" my={0}>
+          {XML}
+        </Code>
+        {/* Button to trigger XML download */}
+        <button
+          className="bg-blue-500 px-2 py-1 text-white rounded"
+          onClick={handleDownload}
+        >
+          Download XML
+        </button>
+      </div>
     </div>
   );
 }
