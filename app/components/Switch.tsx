@@ -18,13 +18,15 @@ export default function Switch({
   // Classes for button and circle
   const buttonClasses = classNames(
     "rounded-full flex h-5 ring-1 ring-inset transition-all duration-200",
-    checked ? "bg-blue-500 ring-transparent" : "bg-white ring-black",
+    checked
+      ? "bg-blue-500 ring-transparent"
+      : "bg-white ring-gray-300 flex-row-reverse",
     radius ? "w-5 ml-5" : "w-10"
   );
 
   const circleClasses = classNames(
     "rounded-full w-3 h-3 m-1 transition-all duration-200",
-    checked ? "bg-white" : "bg-black"
+    checked ? "bg-white" : "bg-gray-500"
   );
 
   return (
@@ -46,7 +48,7 @@ export default function Switch({
         <label className="pl-2">{checked ? "On" : "Off"}</label>
       </div>
       {children == "KMS" && (
-        <label className="font-semibold">Disable App</label>
+        <label className="font-semibold">Exclude App</label>
       )}
     </div>
   );
