@@ -38,7 +38,20 @@ export default function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-us");
   const [checked, setChecked] = useState<AppState>(initialApps);
   const [XML, setXML] = useState("");
-  const [copySuccess, setCopySuccess] = useState<string>("");
+  const [copySuccess, setCopySuccess] = useState<boolean>(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (copySuccess) {
+      // Set a timeout to turn off the state after 3 seconds
+      timer = setTimeout(() => {
+        setCopySuccess(false);
+      }, 3000);
+    }
+
+    // Cleanup the timeout if component unmounts or the effect is re-triggered
+    return () => clearTimeout(timer);
+  }, [copySuccess]);
 
   // Memoize XML generation based on selected apps and language
   const generateOfficeXML = useCallback(
@@ -138,8 +151,8 @@ export default function Home() {
   // Function to copy XML to clipboard
   const handleCopy = () => {
     navigator.clipboard.writeText(XML).then(
-      () => setCopySuccess("Copied!"),
-      () => setCopySuccess("Failed to copy.")
+      () => setCopySuccess(true),
+      () => setCopySuccess(false)
     );
   };
 
@@ -200,6 +213,7 @@ export default function Home() {
         <div className="mt-3">
           {/* Display generated XML */}
           <Code
+            name="Configuration.xml"
             className="border rounded overflow-auto shadow-sm"
             block
             color="red"
