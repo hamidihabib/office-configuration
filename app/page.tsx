@@ -1,15 +1,12 @@
 "use client";
-
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Switch from "./components/Switch";
-import { Code } from "@geist-ui/core";
 import { languages } from "./components/languages";
+import { Code } from "@geist-ui/core";
 import { Check, Copy } from "@geist-ui/icons";
 
-// Define a type for the app state
+// Define the type for app state
 type AppState = {
-  MAK: boolean;
-  KMS: boolean;
   Word: boolean;
   Excel: boolean;
   PowerPoint: boolean;
@@ -20,10 +17,8 @@ type AppState = {
   Visio: boolean;
 };
 
-// Initial app states
+// Initial app states, with all apps enabled by default
 const initialApps: AppState = {
-  MAK: true,
-  KMS: false,
   Word: true,
   Excel: true,
   PowerPoint: true,
@@ -35,29 +30,39 @@ const initialApps: AppState = {
 };
 
 export default function Home() {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-us");
-  const [checked, setChecked] = useState<AppState>(initialApps);
-  const [XML, setXML] = useState("");
-  const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [arch64, setArch64] = useState(true); // State for 64-bit architecture selection
+  const [checked, setChecked] = useState<AppState>(initialApps); // State for app toggle status
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-us"); // Selected language state
+  const [copySuccess, setCopySuccess] = useState<boolean>(false); // State to show copy success
+  const [MAK, setMAK] = useState(true); // State for activation type (MAK or KMS)
+  const [XML, setXML] = useState(""); // Generated XML configuration
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (copySuccess) {
-      // Set a timeout to turn off the state after 3 seconds
-      timer = setTimeout(() => {
-        setCopySuccess(false);
-      }, 3000);
-    }
+  // Copy XML to clipboard
+  const handleCopy = () => {
+    navigator.clipboard.writeText(XML).then(
+      () => setCopySuccess(true),
+      () => setCopySuccess(false)
+    );
+  };
 
-    // Cleanup the timeout if component unmounts or the effect is re-triggered
-    return () => clearTimeout(timer);
-  }, [copySuccess]);
+  // Toggle between 64-bit and 32-bit architectures
+  const switchArch = () => setArch64(!arch64);
 
-  // Memoize XML generation based on selected apps and language
+  // Toggle app inclusion/exclusion
+  const handleClick = useCallback((appName: keyof AppState) => {
+    setChecked((prevChecked) => ({
+      ...prevChecked,
+      [appName]: !prevChecked[appName],
+    }));
+  }, []);
+
+  // Array of app names for iteration
+  const appNames = Object.keys(initialApps) as (keyof AppState)[];
+
+  // Generate the XML configuration based on current selections
   const generateOfficeXML = useCallback(
     (
       {
-        MAK,
         Word,
         Excel,
         PowerPoint,
@@ -67,15 +72,13 @@ export default function Home() {
         Project,
         Visio,
       }: AppState,
-      language: string
+      language: string,
+      arch64: boolean,
+      MAK: boolean
     ) =>
       `<Configuration>
-  ${
-    MAK
-      ? `<!-- configuration for MAK Activation -->`
-      : `<!-- configuration for KMS Activation -->`
-  }
-  <Add OfficeClientEdition="64" Channel="PerpetualVL2024">
+  <!-- configuration for ${MAK ? "MAK" : "KMS"} Activation -->
+  <Add OfficeClientEdition="${arch64 ? `64` : `32`}" Channel="PerpetualVL2024">
     <Product ID="ProPlus2024Volume" PIDKEY="${
       MAK ? "Y63J7-9RNDJ-GD3BV-BDKBP-HH966" : "2TDPW-NDQ7G-FMG99-DXQ7M-TX3T2"
     }">
@@ -88,7 +91,7 @@ export default function Home() {
       }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}
     </Product>${
       Visio
-        ? `<Product ID="VisioPro2024Volume" PIDKEY="${
+        ? `\n    <Product ID="VisioPro2024Volume" PIDKEY="${
             MAK
               ? "3HYNG-BB9J3-MVPP7-2W3D8-CPVG7"
               : "YW66X-NH62M-G6YFP-B7KCT-WXGKQ"
@@ -98,7 +101,7 @@ export default function Home() {
         : ``
     }${
         Project
-          ? `\n      <Product ID="ProjectPro2024Volume" PIDKEY="${
+          ? `\n    <Product ID="ProjectPro2024Volume" PIDKEY="${
               MAK
                 ? "GQRNR-KHGMM-TCMK6-M2R3H-94W9W"
                 : "D9GTG-NP7DV-T6JP3-B6B62-JB89R"
@@ -111,31 +114,10 @@ export default function Home() {
   <RemoveMSI />
   <Property Name="AUTOACTIVATE" Value="1" />
 </Configuration>`,
-    []
+    [MAK, arch64]
   );
 
-  // Handle app switch toggle
-  const handleClick = useCallback((appName: keyof AppState) => {
-    setChecked((prevChecked) => {
-      if (appName === "MAK" && !prevChecked.MAK) {
-        return { ...prevChecked, MAK: true, KMS: false };
-      }
-      if (appName === "KMS" && !prevChecked.KMS) {
-        return { ...prevChecked, KMS: true, MAK: false };
-      }
-      return {
-        ...prevChecked,
-        [appName]: !prevChecked[appName], // Toggle the value
-      };
-    });
-  }, []);
-
-  // Update XML whenever the state changes
-  useEffect(() => {
-    setXML(generateOfficeXML(checked, selectedLanguage));
-  }, [checked, selectedLanguage, generateOfficeXML]);
-
-  // Function to download the generated XML
+  // Download XML file
   const handleDownload = () => {
     const blob = new Blob([XML], { type: "application/xml" });
     const link = document.createElement("a");
@@ -143,35 +125,35 @@ export default function Home() {
     link.download = "Configuration.xml";
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link); // Cleanup the link after download
+    document.body.removeChild(link);
   };
 
-  const appNames = Object.keys(initialApps) as (keyof AppState)[];
+  // Update XML and handle copy success indicator reset
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    setXML(generateOfficeXML(checked, selectedLanguage, arch64, MAK));
+    if (copySuccess) {
+      timer = setTimeout(() => {
+        setCopySuccess(false);
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [checked, selectedLanguage, copySuccess, generateOfficeXML]);
 
-  // Function to copy XML to clipboard
-  const handleCopy = () => {
-    navigator.clipboard.writeText(XML).then(
-      () => setCopySuccess(true),
-      () => setCopySuccess(false)
-    );
-  };
-
-  // Language dropdown component
+  // Language selection dropdown component
   const LanguageDropdown: React.FC = () => {
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedLanguage(event.target.value); // Update language selection
+      setSelectedLanguage(event.target.value);
     };
 
     return (
       <div className="mb-5">
-        <label className="font-semibold" htmlFor="language-select">
-          Choose a language:
-        </label>
+        <label>Choose a language:</label>
         <select
+          className="border rounded-sm"
           id="language-select"
           value={selectedLanguage}
           onChange={handleChange}
-          className="h-[30px] text-gray-500 italic bg-[#eaeaea] rounded-tr-md rounded-bl-md cursor-pointer"
         >
           {languages.map((language) => (
             <option key={language.code} value={language.code}>
@@ -180,63 +162,96 @@ export default function Home() {
           ))}
         </select>
         <br />
-        {/* Display the selected language */}
         {selectedLanguage && (
-          <label className="font-semibold">
-            Selected Language:{" "}
-            <i className="text-gray-500">{selectedLanguage}</i>
-          </label>
+          <label>Selected Language: {selectedLanguage}</label>
         )}
       </div>
     );
   };
 
   return (
-    <div className="flex-col items-center">
-      <div className="flex flex-wrap ml-5 mt-5">
+    <div className="flex flex-wrap p-5">
+      <div>
+        {/* Language selection section */}
         <div>
+          <h2>Language</h2>
+          <hr className="my-2 border-gray-500" />
           <LanguageDropdown />
+        </div>
+        {/* Activation type selection */}
+        <div>
+          <h2>Activation</h2>
+          <hr className="my-2 border-gray-500" />
+          <label htmlFor="">type of activation</label>
+          <div className="flex gap-2 items-center">
+            <Switch onClick={() => setMAK(!MAK)} checked={MAK} radio />
+            <label>MAK</label>
+          </div>
+          <div className="flex gap-2 items-center">
+            <Switch onClick={() => setMAK(!MAK)} checked={!MAK} radio />
+            <label>KMS</label>
+          </div>
+        </div>
+        {/* Architecture selection */}
+        <div>
+          <h2>Architecture</h2>
+          <hr className="my-2 border-gray-500" />
+          <label>Which architecture do you want to deploy?</label>
+          <div className="flex items-center gap-2">
+            <Switch radio onClick={switchArch} checked={arch64} />
+            <label>64</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch radio onClick={switchArch} checked={!arch64} />
+            <label>32</label>
+          </div>
+        </div>
+        {/* App inclusion/exclusion toggles */}
+        <div>
+          <h2>Apps</h2>
+          <hr className="my-2 border-gray-500" />
+          <label>
+            Turn apps on or off to include or exclude them from being deployed
+          </label>
           <div>
-            <label className="font-semibold">Select Activation type</label>
             {appNames.map((appName) => (
-              <Switch
-                radius={appName == "KMS" || appName == "MAK" ? true : false}
-                key={appName}
-                onClick={() => handleClick(appName)}
-                checked={checked[appName]}
-              >
-                {appName}
-              </Switch>
+              <div key={appName} className="flex gap-2">
+                <h4 className="w-24">{appName}</h4>
+                <Switch
+                  onClick={() => handleClick(appName)}
+                  checked={checked[appName]}
+                />
+                <label>{checked[appName] ? "On" : "Off"}</label>
+              </div>
             ))}
           </div>
         </div>
-        <div>
-          {/* Display generated XML */}
-          <Code
-            name="Configuration.xml"
-            className="border rounded overflow-auto shadow-sm"
-            block
-            color="red"
-            my={0}
+      </div>
+      <div>
+        {/* XML code display and action buttons */}
+        <Code
+          name="Configuration.xml"
+          className="border rounded overflow-auto shadow-sm"
+          block
+          color="red"
+          my={0}
+        >
+          {XML}
+        </Code>
+        <div className="flex gap-2 ring-inset flex-row-reverse">
+          <button
+            className="bg-blue-500 text-white px-2 py-1 rounded"
+            onClick={handleDownload}
           >
-            {XML}
-          </Code>
-          {/* Button to trigger XML download */}
-          <div className="flex flex-row-reverse gap-2 py-1">
-            <button
-              className="bg-blue-500 px-2 py-0.5 font-bold text-white rounded"
-              onClick={handleDownload}
-            >
-              Download XML
-            </button>
-            <button
-              className="bg-white px-2 py-1 text-gray-600 rounded border border-gray-500 flex"
-              onClick={handleCopy}
-            >
-              Copy
-              {copySuccess ? <Check /> : <Copy />}
-            </button>
-          </div>
+            Download XML
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex ring-1 ring-gray-500 rounded px-2 py-1"
+          >
+            Copy
+            {copySuccess ? <Check /> : <Copy />}
+          </button>
         </div>
       </div>
     </div>
