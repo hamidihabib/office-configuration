@@ -2,8 +2,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Switch from "./components/Switch";
 import { languages } from "./components/languages";
-import { Code } from "@geist-ui/core";
-import { Check, Copy } from "@geist-ui/icons";
+import Icon from "./components/Icon";
 
 // Define the type for app state
 type AppState = {
@@ -47,7 +46,6 @@ export default function Home() {
 
   // Toggle between 64-bit and 32-bit architectures
   const switchArch = () => setArch64(!arch64);
-
   // Toggle app inclusion/exclusion
   const handleClick = useCallback((appName: keyof AppState) => {
     setChecked((prevChecked) => ({
@@ -77,7 +75,6 @@ export default function Home() {
       MAK: boolean
     ) =>
       `<Configuration>
-  <!-- configuration for ${MAK ? "MAK" : "KMS"} Activation -->
   <Add OfficeClientEdition="${arch64 ? `64` : `32`}" Channel="PerpetualVL2024">
     <Product ID="ProPlus2024Volume" PIDKEY="${
       MAK ? "Y63J7-9RNDJ-GD3BV-BDKBP-HH966" : "2TDPW-NDQ7G-FMG99-DXQ7M-TX3T2"
@@ -135,7 +132,7 @@ export default function Home() {
     if (copySuccess) {
       timer = setTimeout(() => {
         setCopySuccess(false);
-      }, 3000);
+      }, 1000);
     }
     return () => clearTimeout(timer);
   }, [checked, selectedLanguage, copySuccess, generateOfficeXML]);
@@ -148,7 +145,7 @@ export default function Home() {
 
     return (
       <div className="mb-5">
-        <label>Choose a language:</label>
+        {/* <p>Choose a language:</p> */}
         <select
           className="border rounded-sm"
           id="language-select"
@@ -162,15 +159,13 @@ export default function Home() {
           ))}
         </select>
         <br />
-        {selectedLanguage && (
-          <label>Selected Language: {selectedLanguage}</label>
-        )}
+        {selectedLanguage && <p>Selected Language: {selectedLanguage}</p>}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-wrap p-5">
+    <div className="flex flex-wrap p-5 gap-5">
       <div>
         {/* Language selection section */}
         <div>
@@ -182,37 +177,50 @@ export default function Home() {
         <div>
           <h2>Activation</h2>
           <hr className="my-2 border-gray-500" />
-          <label htmlFor="">type of activation</label>
+          <p
+            className="flex gap-2"
+            title={`Multiple Activation Key (MAK) activates systems on a one-time\nbasis, using Microsoft hosted activation services.\nKey Management Service (KMS) allows organizations to activate,\nsystems within their own network.`}
+          >
+            type of activation{" "}
+            <Icon
+              name="info"
+              onClick={() =>
+                alert(
+                  `Multiple Activation Key (MAK) activates systems on a one-time\nbasis, using Microsoft hosted activation services.\nKey Management Service (KMS) allows organizations to activate,\nsystems within their own network.`
+                )
+              }
+            />
+          </p>
           <div className="flex gap-2 items-center">
             <Switch onClick={() => setMAK(!MAK)} checked={MAK} radio />
-            <label>MAK</label>
+            <p>MAK</p>
           </div>
           <div className="flex gap-2 items-center">
             <Switch onClick={() => setMAK(!MAK)} checked={!MAK} radio />
-            <label>KMS</label>
+            <p>KMS</p>
           </div>
         </div>
         {/* Architecture selection */}
         <div>
           <h2>Architecture</h2>
           <hr className="my-2 border-gray-500" />
-          <label>Which architecture do you want to deploy?</label>
+          <p>Which architecture do you want to deploy?</p>
           <div className="flex items-center gap-2">
             <Switch radio onClick={switchArch} checked={arch64} />
-            <label>64</label>
+            <p>64</p>
           </div>
           <div className="flex items-center gap-2">
             <Switch radio onClick={switchArch} checked={!arch64} />
-            <label>32</label>
+            <p>32</p>
           </div>
         </div>
         {/* App inclusion/exclusion toggles */}
         <div>
           <h2>Apps</h2>
           <hr className="my-2 border-gray-500" />
-          <label>
+          <p className="w-80">
             Turn apps on or off to include or exclude them from being deployed
-          </label>
+          </p>
           <div>
             {appNames.map((appName) => (
               <div key={appName} className="flex gap-2">
@@ -221,39 +229,45 @@ export default function Home() {
                   onClick={() => handleClick(appName)}
                   checked={checked[appName]}
                 />
-                <label>{checked[appName] ? "On" : "Off"}</label>
+                <p>{checked[appName] ? "On" : "Off"}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <div>
+      <div className="pt-3.5 mt-5">
         {/* XML code display and action buttons */}
-        <Code
-          name="Configuration.xml"
-          className="border rounded overflow-auto shadow-sm"
-          block
-          color="red"
-          my={0}
-        >
-          {XML}
-        </Code>
-        <div className="flex gap-2 ring-inset flex-row-reverse">
+        <div className="rounded ring-1 ring-gray-300 ring-inset relative">
+          <button className="bg-gray-50 text-gary-900 rounded-br rounded-tl ring-inset px-2 py-1 mb-2 ring-1 ring-gray-300 cursor-default">
+            Configuration.xml
+          </button>
+          <pre className="mx-4 pb-3">{XML}</pre>
+          <button
+            onClick={handleCopy}
+            className="flex ring-1 ring-gray-500 rounded px-1 py-1 absolute bottom-0 right-0"
+          >
+            <Icon name={copySuccess ? "check" : "copy"} />
+          </button>
+        </div>
+        <div className="flex gap-1 ring-inset mt-1">
           <button
             className="bg-blue-500 text-white px-2 py-1 rounded"
             onClick={handleDownload}
           >
             Download XML
           </button>
-          <button
-            onClick={handleCopy}
-            className="flex ring-1 ring-gray-500 rounded px-2 py-1"
-          >
-            Copy
-            {copySuccess ? <Check /> : <Copy />}
-          </button>
         </div>
       </div>
     </div>
   );
+}
+
+{
+  /* <p>
+`Multiple Activation Key (MAK) activates systems on a one-time\n
+basis, using Microsoft hosted activation services.\n
+Key Management Service (KMS) allows organizations to activate,\n
+systems within their own network.`
+</p>;
+ */
 }
