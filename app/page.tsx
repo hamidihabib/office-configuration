@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Switch from "./components/Switch";
 import { languages } from "./components/languages";
 import Icon from "./components/Icon";
+import GithubIcon from "./components/github";
 
 // Define the type for app state
 type AppState = {
@@ -12,6 +13,7 @@ type AppState = {
   Outlook: boolean;
   OneNote: boolean;
   Access: boolean;
+  Skype: boolean;
   Project: boolean;
   Visio: boolean;
 };
@@ -24,6 +26,7 @@ const initialApps: AppState = {
   Outlook: true,
   OneNote: true,
   Access: true,
+  Skype: true,
   Project: true,
   Visio: true,
 };
@@ -67,6 +70,7 @@ export default function Home() {
         Outlook,
         OneNote,
         Access,
+        Skype,
         Project,
         Visio,
       }: AppState,
@@ -85,7 +89,9 @@ export default function Home() {
         PowerPoint ? `` : '\n      <ExcludeApp ID="PowerPoint" />'
       }${Outlook ? `` : '\n      <ExcludeApp ID="Outlook" />'}${
         OneNote ? `` : '\n      <ExcludeApp ID="OneNote" />'
-      }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}
+      }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}${
+        Skype ? `` : '\n      <ExcludeApp ID="Lync" />'
+      }
     </Product>${
       Visio
         ? `\n    <Product ID="VisioPro2024Volume" PIDKEY="${
@@ -249,25 +255,24 @@ export default function Home() {
             <Icon name={copySuccess ? "check" : "copy"} />
           </button>
         </div>
-        <div className="flex gap-1 ring-inset mt-1">
+        <div className="flex gap-1 ring-inset mt-1 justify-between">
           <button
             className="bg-blue-500 text-white px-2 py-1 rounded"
             onClick={handleDownload}
           >
             Download XML
           </button>
+          <a
+            href="https://github.com/hamidihabib/office-configuration"
+            target="_blank"
+          >
+            <p className="underline hover:text-blue-700 flex gap-1">
+              https://github.com/hamidihabib/office-configuration
+              <GithubIcon />
+            </p>
+          </a>
         </div>
       </div>
     </div>
   );
-}
-
-{
-  /* <p>
-`Multiple Activation Key (MAK) activates systems on a one-time\n
-basis, using Microsoft hosted activation services.\n
-Key Management Service (KMS) allows organizations to activate,\n
-systems within their own network.`
-</p>;
- */
 }
