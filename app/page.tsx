@@ -91,6 +91,10 @@ export default function Home() {
         OneNote ? `` : '\n      <ExcludeApp ID="OneNote" />'
       }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}${
         Skype ? `` : '\n      <ExcludeApp ID="Lync" />'
+      }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}${
+        Visio ? `` : '\n      <ExcludeApp ID="Visio" />'
+      }${Access ? `` : '\n      <ExcludeApp ID="Access" />'}${
+        Project ? `` : '\n      <ExcludeApp ID="Project" />'
       }
     </Product>${
       Visio
